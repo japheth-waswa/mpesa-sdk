@@ -1,10 +1,17 @@
 # JAVA M-Pesa SDK
+Integrates with Mpesa daraja api
 <br>
 
 ### Features
 
 - Mpesa Express - STK Push (C2B)
 - Mpesa Express - STK Query :- Query the status of an STK Push
+- Register Validation and Confirmation URL (C2B)
+- Payment Pay bill and buy goods (B2B)
+- Ussd Push Pay bill and buy goods (B2B)
+- Disbursement (B2C)
+- Tax Remittance
+- Dynamic QR Code
 <br>
 
 ## Requirements
@@ -13,6 +20,18 @@
 - consumerKey, consumerSecret, passKey, 
 - initiatorName (The M-Pesa API operator username) 
 - initiatorPassword (The M-Pesa API operator password)
+
+## Installation
+
+### Using Maven
+1. Add the dependency:
+    ```xml
+    <dependency>
+        <groupId>io.github.japheth-waswa.mpesa</groupId>
+        <artifactId>mpesa-sdk</artifactId>
+        <version>1.0.1</version>
+    </dependency>
+    ```
 
 
 ## Usage

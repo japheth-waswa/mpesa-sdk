@@ -6,11 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-//@Builder
-//@Getter
-//@Setter
+/**
+ * ApiClient Request instance
+ */
 public interface Request {
 
+    /**
+     * Parses an object to JSON string
+     * @return String
+     */
     default String getPostBody() {
 
         @Getter

@@ -124,7 +124,7 @@ public class MpesaClient {
     }
 
     /**
-     * Parses the response from across all callbacks & timeout urls  (CallBackURL | ResultURL | QueueTimeOutURL)
+     * Parses the response from across all callbacks and timeout urls  (CallBackURL | ResultURL | QueueTimeOutURL)
      * ResponseParserType.C2B_STK MpesaResponse{ internalStatus=true | false, Body }
      * ResponseParserType.B2B_PAYMENT MpesaResponse{ internalStatus=true | false, Result }
      * ResponseParserType.B2B_STK MpesaResponse{ internalStatus=true | false, resultCode, resultDesc,requestId, amount, paymentReference, resultType, conversationId, transactionId, status }

@@ -1,15 +1,15 @@
 package base;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+/**
+ * Request content-type
+ */
+@AllArgsConstructor
+@Getter
 public enum ContentType {
     JSON("application/json");
     
     private String value;
-
-    ContentType(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
 }
