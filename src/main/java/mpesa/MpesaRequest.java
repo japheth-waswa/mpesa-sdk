@@ -10,6 +10,8 @@ import mpesa.util.CommandID;
 import mpesa.util.MpesaRequestType;
 import mpesa.util.TrxCodeType;
 
+import java.util.UUID;
+
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MpesaRequest implements Request {
@@ -47,6 +49,21 @@ public class MpesaRequest implements Request {
         requestPayload.setResponseType(mpesaRequestDto.getRegisterURLResponseType().getValue());
         requestPayload.setConfirmationURL(mpesaRequestDto.getConfirmationURL());
         requestPayload.setValidationURL(mpesaRequestDto.getValidationURL());
+        return requestPayload;
+    }
+    private MpesaRequestDto C2TransactionStatusPayload() {
+        MpesaRequestDto requestPayload = new MpesaRequestDto();
+        requestPayload.setCommandId("TransactionStatusQuery");
+        requestPayload.setOriginatorConversationId(UUID.randomUUID().toString());
+        requestPayload.setIdentifierType("4");
+        requestPayload.setInitiator(mpesaRequestDto.getInitiator());
+        requestPayload.setSecurityCredential(mpesaRequestDto.getSecurityCredential());
+        requestPayload.setTransactionId(mpesaRequestDto.getTransactionId());
+        requestPayload.setPartyA(Long.valueOf(mpesaRequestDto.getBusinessShortCode()));
+        requestPayload.setResultURL(mpesaRequestDto.getResultURL());
+        requestPayload.setQueueTimeOutURL(mpesaRequestDto.getQueueTimeOutURL());
+        requestPayload.setRemarks(mpesaRequestDto.getRemarks());
+        requestPayload.setOccassion(mpesaRequestDto.getOccassion());
         return requestPayload;
     }
 
@@ -158,6 +175,7 @@ public class MpesaRequest implements Request {
             case MpesaRequestType.STK_SEND -> mpesaReqPayload = stkSendRequestPayload();
             case MpesaRequestType.STK_QUERY -> mpesaReqPayload = stkQueryRequestPayload();
             case MpesaRequestType.C2B_REGISTER_URL -> mpesaReqPayload = C2BRegisterURLPayload();
+            case MpesaRequestType.C2B_TRANSACTION_STATUS -> mpesaReqPayload = C2TransactionStatusPayload();
             case MpesaRequestType.B2B_PAY_BILL, MpesaRequestType.B2B_BUY_GOODS -> mpesaReqPayload = B2BPaymentRequest();
             case MpesaRequestType.B2B_STK -> mpesaReqPayload = B2BStkPayload();
             case MpesaRequestType.B2C -> mpesaReqPayload = B2CPayload();

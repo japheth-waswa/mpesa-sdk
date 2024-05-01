@@ -88,6 +88,12 @@ public class MpesaRequestDto {
     @JsonProperty("CommandID")
     private String commandId;
 
+    @JsonProperty("TransactionID")
+    private String transactionId;
+
+    @JsonProperty("IdentifierType")
+    private String identifierType;
+
     @JsonProperty("SenderIdentifierType")
     private String senderIdentifierType;
 

@@ -6,6 +6,7 @@ import base.Helpers;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import mpesa.b2b.ResponseBody;
+import mpesa.b2b.ResultParameter;
 import mpesa.dto.MpesaRequestDto;
 import mpesa.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -137,6 +138,23 @@ public class MpesaClient {
             case ResponseParserType.C2B_STK->mpesaResponse.setInternalStatus(mpesaResponse.getBody().getStkCallback().getResultCode() == 0);
             case ResponseParserType.B2B_PAYMENT,B2C,TAX_REMITTANCE->mpesaResponse.setInternalStatus(mpesaResponse.getResult().getResultCode() == 0);
             case ResponseParserType.B2B_STK->mpesaResponse.setInternalStatus(mpesaResponse.getResultCode().equals("0"));
+            case ResponseParserType.C2B_TRANSACTION_STATUS->{
+                mpesaResponse.setInternalStatus(mpesaResponse.getResult().getResultCode() == 0);
+                if(mpesaResponse.getResult().getResultParameters() != null
+                        && mpesaResponse.getResult().getResultParameters().getResultParameter() != null
+                        && !mpesaResponse.getResult().getResultParameters().getResultParameter().isEmpty()){
+
+                    //extract mpesa amount, mpesaReference
+                    for(ResultParameter resultParameter:mpesaResponse.getResult().getResultParameters().getResultParameter()){
+                        if(resultParameter.getKey().equals("Amount")){
+                            mpesaResponse.setAmount(Double.parseDouble(resultParameter.getValue()));
+                        }
+                        if(resultParameter.getKey().equals("ReceiptNo")){
+                            mpesaResponse.setMpesaReference(resultParameter.getValue());
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -168,6 +186,28 @@ public class MpesaClient {
         mpesaRequest.setMpesaRequestDto(mpesaRequestDto);
         try (ApiClient<MpesaRequest, MpesaResponse> apiClient = new ApiClient<>();
              ApiClient<MpesaRequest, MpesaResponse> build = buildRequest(apiClient, mpesaRequest, MpesaURL.C2B_REGISTER_URL)) {
+            MpesaResponse mpesaResponse = build.post();
+            Integer responseCode = mpesaResponse.getResponseCode();
+            mpesaResponse.setInternalStatus(responseCode != null && responseCode == 0);
+            return mpesaResponse;
+        }
+    }
+
+    /**
+     * @return MpesaResponse { internalStatus=true|false, originatorConversationId, conversationId, responseCode, responseDescription }
+     * @throws Exception
+     */
+    public MpesaResponse C2BTransactionStatus() throws Exception {
+        //generate security credentials
+        String securityCredentials = Helpers.generateSecurityCredentials(initiatorPassword, environment == Environment.DEVELOPMENT ? Helpers.MPESA_CERT_DEV : Helpers.MPESA_CERT_PROD);
+        mpesaRequestDto.setSecurityCredential(securityCredentials);
+        mpesaRequestDto.setInitiator(initiatorName);
+
+        MpesaRequest mpesaRequest = new MpesaRequest();
+        mpesaRequestDto.setMpesaRequestType(MpesaRequestType.C2B_TRANSACTION_STATUS);
+        mpesaRequest.setMpesaRequestDto(mpesaRequestDto);
+        try (ApiClient<MpesaRequest, MpesaResponse> apiClient = new ApiClient<>();
+             ApiClient<MpesaRequest, MpesaResponse> build = buildRequest(apiClient, mpesaRequest, MpesaURL.C2B_TRANSACTION_STATUS_URL)) {
             MpesaResponse mpesaResponse = build.post();
             Integer responseCode = mpesaResponse.getResponseCode();
             mpesaResponse.setInternalStatus(responseCode != null && responseCode == 0);

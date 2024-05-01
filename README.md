@@ -29,7 +29,7 @@ Integrates with Mpesa daraja api
     <dependency>
         <groupId>io.github.japheth-waswa.mpesa</groupId>
         <artifactId>mpesa-sdk</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </dependency>
     ```
 
@@ -142,11 +142,77 @@ MpesaResponse mpesaResponse = new MpesaClient()
 ```originatorCoversationID``` ```responseCode``` ```responseDescription```<br>
 <br>
 
-### Validation/Confirmation Request Body
+#### Validation/Confirmation Request Body
 Consider using ```MpesaResponse``` to parse the request received from the URLS' you have registered
 
 #### Payload
 ```transactionType``` ```transID``` ```transTime``` ```transAmount``` ```businessShortCode``` ```billRefNumber``` ```invoiceNumber``` ```orgAccountBalance``` ```thirdPartyTransID``` ```phoneNumber``` ```firstName``` ```middleName``` ```lastName```<br>
+<br>
+
+#### Generate Validation Response Body
+Use ```MpesaResponse``` to respond to request from the validation URL
+```java
+MpesaResponse mpesaResponse = new MpesaClient()
+                              .generateValidationResponse(
+                              ResponseStatus.SUCCESS, 
+                              ResultDesc.ACCEPTED, 
+                              null);
+```
+
+#### Generate acknowledgement Response Body
+Use ```MpesaResponse``` to respond to request from the confirmation URL
+```java
+MpesaResponse mpesaResponse = new MpesaClient()
+                              .generateAcknowledgmentResponse();
+```
+<br>
+
+### C2B Transaction Status
+Check the status of a transaction
+
+```java
+
+import mpesa.dto.MpesaRequestDto;
+import mpesa.util.*;
+
+MpesaRequestDto mpesaRequestDto = new MpesaRequestDto();
+mpesaRequestDto.setBusinessShortCode("<REPLACE>");
+mpesaRequestDto.setTransactionId("<REPLACE>");//mpesa reference e.g NEF61H8J60
+mpesaRequestDto.setResultURL("<REPLACE>");
+mpesaRequestDto.setQueueTimeOutURL("<REPLACE>");
+mpesaRequestDto.setRemarks("<REPLACE>");//Alpha-numeric (Max 100 chars)
+mpesaRequestDto.setOccassion("<REPLACE>");//Alpha-numeric (Max 100 chars)
+
+MpesaResponse mpesaResponse = new MpesaClient()
+.environment("<REPLACE>")
+.consumerSecret("<REPLACE>")
+.consumerKey("<REPLACE>")
+.initiatorName("<REPLACE>")
+.initiatorPassword("<REPLACE>")
+.mpesaRequestDto(mpesaRequestDto)
+.C2BTransactionStatus();
+```
+
+#### MpesaResponse
+```originatorConversationId``` ```conversationId``` ```responseCode``` ```responseDescription```<br>
+<br>
+
+### C2B Transaction Status Result Body
+Consider using ```MpesaResponse``` to parse the request received from the resultURL & queueTimeOutURL URLS' you had provided
+Then call the method below
+```java
+MpesaResponse mpesaResponse;//Get this from your http post endpoint
+        
+new MpesaClient()
+.responseParser(mpesaResponse,ResponseParserType.C2B_TRANSACTION_STATUS);
+if(mpesaResponse.isInternalStatus()){
+    //successful
+}else{
+   //failed 
+}
+```
+#### Payload
+```internalStatus```  ```mpesaReference``` ```amount```<br>
 <br>
 
 ### B2B payment (Pay Bill & Buy Goods)
@@ -179,7 +245,7 @@ MpesaResponse mpesaResponse = new MpesaClient()
 ```
 
 #### MpesaResponse
-```internalStatus``` ```result```<br>
+```internalStatus``` ```originatorConversationId``` ```conversationId``` ```responseDescription```<br>
 <br>
 
 ### B2B Result Body
@@ -364,11 +430,11 @@ mpesaRequestDto.setTrxCodeType(TrxCodeType.BUY_GOODS);
 mpesaRequestDto.setBusinessShortCode(373132);
 
 ////if trxCodeType IS WITHDRAW_CASH_AGENT_TILL then setAgentTill
-//mpesaRequestDto.setTrxCodeType(TrxCodeType.BUY_GOODS);
+//mpesaRequestDto.setTrxCodeType(TrxCodeType.WITHDRAW_CASH_AGENT_TILL);
 //mpesaRequestDto.setAgentTill(373132);
 
 ////if trxCodeType is SEND_MONEY_MOBILE_NUMBER then setPhoneNumber
-//mpesaRequestDto.setTrxCodeType(TrxCodeType.BUY_GOODS);
+//mpesaRequestDto.setTrxCodeType(TrxCodeType.SEND_MONEY_MOBILE_NUMBER);
 //mpesaRequestDto.setPhoneNumber(PHONE_NUMBER_B2B);
 
 MpesaResponse mpesaResponse = new MpesaClient()

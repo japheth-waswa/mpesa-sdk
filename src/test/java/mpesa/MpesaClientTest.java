@@ -12,20 +12,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MpesaClientTest {
 
-    private final String CONSUMER_KEY = "0";
-    private final String CONSUMER_SECRET = "0";
-    private final String MPESA_PASS_KEY = "0";
-    private final String INITIATOR_NAME = "0";
-    private final String INITIATOR_PASSWORD = "0";
-    private final int BUSINESS_SHORT_CODE = 0;
-    private final int SENDING_SHORT_CODE = 0;
-    private final int BUSINESS_SHORT_CODE_B2C = 0;
-    private final String TAX_PRN="0";
-    private final long PARTY_A = 0;
-    private final int PARTY_B = 0;
-    private final long PHONE_NUMBER = 0L;
-    private final long PHONE_NUMBER_B2B = 0L;
-    private final String WEB_HOOK_BASE_URL = "https://4f67-222-908-567-203.ngrok-free.app";
+    private final String CONSUMER_KEY = "RxPfVSKkmKRyndSQtlzhBAPEsX5ckeA5DAKDJ16n60GGRmhA";
+    private final String CONSUMER_SECRET = "CPM2CgY7dzwWWnkhD0AT7IXjwdA0EyWFvAAnAxAY6DGMczXZ0i8d7pZgwPGqPL5y";
+    private final String MPESA_PASS_KEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919";
+    private final String INITIATOR_NAME = "testapi";
+    private final String INITIATOR_PASSWORD = "Safaricom999!*!";
+    private final int BUSINESS_SHORT_CODE = 174379;
+    private final int SENDING_SHORT_CODE = 7318002;
+    private final int BUSINESS_SHORT_CODE_B2C = 600995;
+    private final String TAX_PRN = "353353";
+    private final long PARTY_A = 600981;
+    private final int PARTY_B = 600000;
+    private final long PHONE_NUMBER = 254719726698L;
+    private final long PHONE_NUMBER_B2B = 254708374149L;
+    private final String WEB_HOOK_BASE_URL = "https://e41c-102-140-192-197.ngrok-free.app";
 
     private final String CALLBACK_URL = WEB_HOOK_BASE_URL + "/hook";
     private final String VALIDATION_URL = WEB_HOOK_BASE_URL + "/validation";
@@ -421,7 +421,7 @@ class MpesaClientTest {
     void remitTax() throws Exception {
         MpesaRequestDto mpesaRequestDto = new MpesaRequestDto();
         mpesaRequestDto.setTaxPRN(TAX_PRN);
-        mpesaRequestDto.setBusinessShortCode((int)PARTY_A);
+        mpesaRequestDto.setBusinessShortCode((int) PARTY_A);
         mpesaRequestDto.setAmount(239);
         mpesaRequestDto.setRemarks("Testing");//max 100 chars
         mpesaRequestDto.setQueueTimeOutURL(TIMEOUT_URL);
@@ -499,4 +499,55 @@ class MpesaClientTest {
         assertFalse(mpesaResponse.isInternalStatus());
     }
 
+    @Test
+    void c2BTransactionStatus() throws Exception {
+        System.out.println(CALLBACK_URL);
+        MpesaRequestDto mpesaRequestDto = new MpesaRequestDto();
+        mpesaRequestDto.setBusinessShortCode(BUSINESS_SHORT_CODE);
+        mpesaRequestDto.setTransactionId("SDU1QRSOJR");
+//        mpesaRequestDto.setTransactionId("NEF61H8J60");
+//        mpesaRequestDto.setTransactionId("MBN31H462N");
+        mpesaRequestDto.setResultURL(CALLBACK_URL);
+        mpesaRequestDto.setQueueTimeOutURL(CALLBACK_URL);
+        mpesaRequestDto.setRemarks("some random str");
+        mpesaRequestDto.setOccassion("some random str");
+
+        MpesaResponse mpesaResponse = new MpesaClient()
+                .environment(Environment.DEVELOPMENT)
+                .consumerSecret(CONSUMER_SECRET)
+                .consumerKey(CONSUMER_KEY)
+                .initiatorName(INITIATOR_NAME)
+                .initiatorPassword(INITIATOR_PASSWORD)
+                .mpesaRequestDto(mpesaRequestDto)
+                .C2BTransactionStatus();
+        System.out.println(mpesaResponse);
+        assertTrue(mpesaResponse.isInternalStatus());
+        assertEquals(0, mpesaResponse.getResponseCode());
+    }
+
+    @Test
+    void c2BTransactionStatus_success() throws JsonProcessingException {
+        MpesaResponse mpesaResponse = Helpers.jsonToPOJO(MpesaResponse.class, """
+                {"Result":{"ResultType":"0","ResultCode":"0","ResultDesc":"The service request is processed successfully","OriginatorConversationID":"626f6ddf-ab37-4650-b882-b1de92ec9aa4","ConversationID":"12345677dfdf89099B3","ResultParameters":{"ResultParameter":[{"Key":"CreditPartyName","Value":"600310 - Safaricom333"},{"Key":"DebitPartyName","Value":"254708374149 - John Doe"},{"Key":"ReceiptNo","Value":"MBN31H462N"},{"Key":"Amount","Value":"300"}]}}}
+                """);
+        new MpesaClient()
+                .responseParser(mpesaResponse, ResponseParserType.C2B_TRANSACTION_STATUS);
+        System.out.println(mpesaResponse);
+        assertTrue(mpesaResponse.isInternalStatus());
+        assertEquals("MBN31H462N", mpesaResponse.getMpesaReference());
+        assertEquals(300, mpesaResponse.getAmount());
+    }
+
+    @Test
+    void c2BTransactionStatus_fail() throws JsonProcessingException {
+        MpesaResponse mpesaResponse = Helpers.jsonToPOJO(MpesaResponse.class, """
+                {"Result":{"ResultType":"0","ResultCode":"100","ResultDesc":"The service request is processed successfully","OriginatorConversationID":"626f6ddf-ab37-4650-b882-b1de92ec9aa4","ConversationID":"12345677dfdf89099B3","ResultParameters":{"ResultParameter":[{"Key":"CreditPartyName","Value":"600310 - Safaricom333"},{"Key":"DebitPartyName","Value":"254708374149 - John Doe"},{"Key":"ReceiptNo","Value":"MBN31H462N"},{"Key":"Amount","Value":"300"}]}}}
+                """);
+        new MpesaClient()
+                .responseParser(mpesaResponse, ResponseParserType.C2B_TRANSACTION_STATUS);
+        System.out.println(mpesaResponse);
+        assertFalse(mpesaResponse.isInternalStatus());
+        assertEquals("MBN31H462N", mpesaResponse.getMpesaReference());
+        assertEquals(300, mpesaResponse.getAmount());
+    }
 }

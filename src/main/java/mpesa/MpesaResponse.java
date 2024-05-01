@@ -136,6 +136,7 @@ public class MpesaResponse implements Response {
     private String qrCode;
 
     private Double amount;
+    private String mpesaReference;
     private String paymentReference;
     private Integer resultType;
     private String transactionId;
