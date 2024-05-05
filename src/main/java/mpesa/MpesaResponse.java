@@ -15,6 +15,7 @@ import mpesa.b2b.Result;
 import mpesa.stk.Body;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -141,5 +142,7 @@ public class MpesaResponse implements Response {
     private Integer resultType;
     private String transactionId;
     private String status;
+    private Instant transactionDate;
+    private String fullNames;
 
 }

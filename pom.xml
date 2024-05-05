@@ -85,7 +85,7 @@
                         </goals>
                         <configuration>
                             <keyname>0xE9C55E8D</keyname>
-                            <passphraseServerId>0xE9C55E8D</passphraseServerId>
+<!--                            <passphraseServerId>0xE9C55E8D</passphraseServerId>-->
                         </configuration>
                     </execution>
                 </executions>

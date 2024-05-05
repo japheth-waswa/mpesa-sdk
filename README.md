@@ -113,7 +113,7 @@ if(mpesaResponse.isInternalStatus()){
 ```
 
 #### MpesaResponse
-```internalStatus``` ```body```<br>
+```internalStatus``` ```body``` ```amount``` ```mpesaReference``` ```phoneNumber``` ```transactionDate```<br>
 <br>
 
 ### C2B Register both validation and confirmation URL
@@ -147,6 +147,9 @@ Consider using ```MpesaResponse``` to parse the request received from the URLS' 
 
 #### Payload
 ```transactionType``` ```transID``` ```transTime``` ```transAmount``` ```businessShortCode``` ```billRefNumber``` ```invoiceNumber``` ```orgAccountBalance``` ```thirdPartyTransID``` ```phoneNumber``` ```firstName``` ```middleName``` ```lastName```<br>
+<br/>Whereby<br/>
+```transID``` is the mpesa reference e.g NEF61H8J60<br/>
+```billRefNumber``` is your transaction ref number or account number input by the customer
 <br>
 
 #### Generate Validation Response Body
@@ -212,7 +215,7 @@ if(mpesaResponse.isInternalStatus()){
 }
 ```
 #### Payload
-```internalStatus```  ```mpesaReference``` ```amount```<br>
+```internalStatus``` ```amount``` ```mpesaReference``` ```phoneNumber``` ```fullNames``` ```transactionDate```<br>
 <br>
 
 ### B2B payment (Pay Bill & Buy Goods)

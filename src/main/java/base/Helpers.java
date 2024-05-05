@@ -19,7 +19,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
@@ -54,10 +56,11 @@ public class Helpers {
 
     /**
      * Parse json string to list
+     *
      * @param elementType Dto object class
-     * @param json String representation of the json
+     * @param json        String representation of the json
+     * @param <T>         Object to be returned
      * @return List of type T
-     * @param <T> Object to be returned
      * @throws JsonProcessingException While parsing the json
      */
     public static <T> List<T> jsonToList(Class<T> elementType, String json) throws JsonProcessingException {
@@ -69,10 +72,11 @@ public class Helpers {
 
     /**
      * Parse json string to POJO
+     *
      * @param elementType POJO object class
-     * @param json String representation of the json
+     * @param json        String representation of the json
+     * @param <T>         Object of type T
      * @return POJO of type T
-     * @param <T> Object of type T
      * @throws JsonProcessingException While parsing the json
      */
     public static <T> T jsonToPOJO(Class<T> elementType, String json) throws JsonProcessingException {
@@ -83,9 +87,10 @@ public class Helpers {
 
     /**
      * Convert a POJO to string
+     *
      * @param data POJO
+     * @param <T>  POJO class
      * @return String from the POJO
-     * @param <T> POJO class
      * @throws JsonProcessingException While processing
      */
     public static <T> String objToString(T data) throws JsonProcessingException {
@@ -96,9 +101,10 @@ public class Helpers {
 
     /**
      * Convert a List of POJO to string
+     *
      * @param data List of POJOs
+     * @param <T>  POJO class
      * @return String from the List of POJOs
-     * @param <T> POJO class
      * @throws JsonProcessingException While processing
      */
     public static <T> String objToString(List<T> data) throws JsonProcessingException {
@@ -109,6 +115,7 @@ public class Helpers {
 
     /**
      * Remove any trailing slashes from a string
+     *
      * @param input String
      * @return Parsed string without trailing slashes
      */
@@ -118,8 +125,9 @@ public class Helpers {
 
     /**
      * Build URL from the provided params
+     *
      * @param queryParams Query parameters
-     * @param urlParts Parts of the url
+     * @param urlParts    Parts of the url
      * @return URI
      */
     public static URI buildUrl(Map<String, String> queryParams, String... urlParts) {
@@ -142,6 +150,7 @@ public class Helpers {
 
     /**
      * Generates basic auth string
+     *
      * @param username auth username
      * @param password auth password
      * @return basic auth
@@ -153,6 +162,7 @@ public class Helpers {
 
     /**
      * Binds the bearer token
+     *
      * @param accessToken The access token
      * @return bearer token
      */
@@ -162,8 +172,19 @@ public class Helpers {
 
     /**
      * Formats the date provided the pattern
+     *
      * @param dateTime Instance of LocalDateTime
-     * @param pattern Date string pattern
+     * @return formatted date as string
+     */
+    public static String formatDateTime(LocalDateTime dateTime) {
+        return dateTime.format(DateTimeFormatter.ofPattern(MPESA_TIMESTAMP_FORMAT));
+    }
+
+    /**
+     * Formats the date provided the pattern
+     *
+     * @param dateTime Instance of LocalDateTime
+     * @param pattern  Date string pattern
      * @return formatted date as string
      */
     public static String formatDateTime(LocalDateTime dateTime, String pattern) {
@@ -171,7 +192,36 @@ public class Helpers {
     }
 
     /**
+     * Formats the date provided the pattern
+     * @param dateTime
+     * @return Instant
+     */
+    public static Instant formatDateTimeToInstant(LocalDateTime dateTime) {
+        return dateTime.atZone(ZoneId.systemDefault()).toInstant();
+    }
+
+    /**
+     * Formats the date provided the pattern
+     * @param dateTime
+     * @param pattern
+     * @return Instant
+     */
+    public static Instant formatDateTimeToInstant(String dateTime, String pattern) {
+        return formatDateTimeToInstant(LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern(pattern)));
+    }
+
+    /**
+     * Formats the date provided the pattern
+     * @param dateTime
+     * @return Instant
+     */
+    public static Instant formatDateTimeToInstant(String dateTime) {
+        return formatDateTimeToInstant(dateTime, MPESA_TIMESTAMP_FORMAT);
+    }
+
+    /**
      * Get the current LocalDateTime with a certain format
+     *
      * @param pattern ate string pattern ie yyyy-MMM-DD
      * @return formatted date as string
      */
@@ -181,16 +231,17 @@ public class Helpers {
 
     /**
      * Algorithm to generate mpesa security credentials
-     * @param password  mpesa password
+     *
+     * @param password        mpesa password
      * @param certificatePath development or production certificate
-     * @throws IOException While processing
-     * @throws CertificateException While processing
-     * @throws NoSuchPaddingException While processing
-     * @throws NoSuchAlgorithmException While processing
-     * @throws InvalidKeyException While processing
-     * @throws IllegalBlockSizeException While processing
-     * @throws BadPaddingException While processing
      * @return String
+     * @throws IOException               While processing
+     * @throws CertificateException      While processing
+     * @throws NoSuchPaddingException    While processing
+     * @throws NoSuchAlgorithmException  While processing
+     * @throws InvalidKeyException       While processing
+     * @throws IllegalBlockSizeException While processing
+     * @throws BadPaddingException       While processing
      */
     public static String generateSecurityCredentials(String password, String certificatePath) throws IOException, CertificateException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         // Load certificate

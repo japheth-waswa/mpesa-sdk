@@ -8,6 +8,7 @@ import lombok.experimental.Accessors;
 import mpesa.b2b.ResponseBody;
 import mpesa.b2b.ResultParameter;
 import mpesa.dto.MpesaRequestDto;
+import mpesa.stk.Item;
 import mpesa.util.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,21 +20,21 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
 import static base.Helpers.MPESA_TIMESTAMP_FORMAT;
 
-
 @Data
 @Accessors(chain = true, fluent = true)
 public class MpesaClient {
     private static final double MIN_B2B_AMOUNT = 10;
-    private final String TAX_COMMAND_ID="PayTaxToKRA";
-    private final String SENDER_IDENTIFIER_TYPE="4";
-    private final String RECEIVER_IDENTIFIER_TYPE="4";
-    private final long TAX_ORG_BUSINESS_SHORTCODE=572572;
+    private final String TAX_COMMAND_ID = "PayTaxToKRA";
+    private final String SENDER_IDENTIFIER_TYPE = "4";
+    private final String RECEIVER_IDENTIFIER_TYPE = "4";
+    private final long TAX_ORG_BUSINESS_SHORTCODE = 572572;
     private Environment environment;
     private String consumerKey;
     private String consumerSecret;
@@ -130,27 +131,71 @@ public class MpesaClient {
      * ResponseParserType.B2B_PAYMENT MpesaResponse{ internalStatus=true | false, Result }
      * ResponseParserType.B2B_STK MpesaResponse{ internalStatus=true | false, resultCode, resultDesc,requestId, amount, paymentReference, resultType, conversationId, transactionId, status }
      * ResponseParserType.B2C MpesaResponse{ internalStatus=true | false, result }
+     *
      * @param mpesaResponse
      * @param responseParserType
      */
-  public void responseParser(@NotNull MpesaResponse mpesaResponse,@NotNull ResponseParserType responseParserType) {
-        switch (responseParserType){
-            case ResponseParserType.C2B_STK->mpesaResponse.setInternalStatus(mpesaResponse.getBody().getStkCallback().getResultCode() == 0);
-            case ResponseParserType.B2B_PAYMENT,B2C,TAX_REMITTANCE->mpesaResponse.setInternalStatus(mpesaResponse.getResult().getResultCode() == 0);
-            case ResponseParserType.B2B_STK->mpesaResponse.setInternalStatus(mpesaResponse.getResultCode().equals("0"));
-            case ResponseParserType.C2B_TRANSACTION_STATUS->{
+    public void responseParser(@NotNull MpesaResponse mpesaResponse, @NotNull ResponseParserType responseParserType) {
+        switch (responseParserType) {
+            case ResponseParserType.C2B_STK -> {
+                mpesaResponse.setInternalStatus(mpesaResponse.getBody().getStkCallback().getResultCode() == 0);
+                //extract amount, mpesaReference;
+                if (mpesaResponse.getBody().getStkCallback().getCallbackMetadata() != null
+                        && mpesaResponse.getBody().getStkCallback().getCallbackMetadata().getItems() != null
+                        && !mpesaResponse.getBody().getStkCallback().getCallbackMetadata().getItems().isEmpty()) {
+
+                    for (Item item : mpesaResponse.getBody().getStkCallback().getCallbackMetadata().getItems()) {
+                        if (item.getName().equals("Amount")) {
+                            mpesaResponse.setAmount(Double.parseDouble(item.getValue()));
+                        }
+                        if (item.getName().equals("MpesaReceiptNumber")) {
+                            mpesaResponse.setMpesaReference(item.getValue());
+                        }
+                        if (item.getName().equals("PhoneNumber")) {
+                            mpesaResponse.setPhoneNumber(item.getValue());
+                        }
+                        if (item.getName().equals("TransactionDate")) {
+                            try {
+                                mpesaResponse.setTransactionDate(Helpers.formatDateTimeToInstant(item.getValue()));
+                            } catch (Exception e) {
+                            }
+                        }
+
+                    }
+                }
+            }
+            case ResponseParserType.B2B_PAYMENT, B2C, TAX_REMITTANCE ->
+                    mpesaResponse.setInternalStatus(mpesaResponse.getResult().getResultCode() == 0);
+            case ResponseParserType.B2B_STK ->
+                    mpesaResponse.setInternalStatus(mpesaResponse.getResultCode().equals("0"));
+            case ResponseParserType.C2B_TRANSACTION_STATUS -> {
                 mpesaResponse.setInternalStatus(mpesaResponse.getResult().getResultCode() == 0);
-                if(mpesaResponse.getResult().getResultParameters() != null
+                if (mpesaResponse.getResult().getResultParameters() != null
                         && mpesaResponse.getResult().getResultParameters().getResultParameter() != null
-                        && !mpesaResponse.getResult().getResultParameters().getResultParameter().isEmpty()){
+                        && !mpesaResponse.getResult().getResultParameters().getResultParameter().isEmpty()) {
 
                     //extract mpesa amount, mpesaReference
-                    for(ResultParameter resultParameter:mpesaResponse.getResult().getResultParameters().getResultParameter()){
-                        if(resultParameter.getKey().equals("Amount")){
+                    for (ResultParameter resultParameter : mpesaResponse.getResult().getResultParameters().getResultParameter()) {
+                        if (resultParameter.getKey().equals("Amount")) {
                             mpesaResponse.setAmount(Double.parseDouble(resultParameter.getValue()));
                         }
-                        if(resultParameter.getKey().equals("ReceiptNo")){
+                        if (resultParameter.getKey().equals("ReceiptNo")) {
                             mpesaResponse.setMpesaReference(resultParameter.getValue());
+                        }
+                        if (resultParameter.getKey().equals("DebitPartyName") && !resultParameter.getValue().isBlank()) {
+                            String[] debitPartyName = Arrays.stream(resultParameter.getValue().split("-"))
+                                    .map(String::trim)
+                                    .filter(s -> !s.isBlank())
+                                    .toArray(String[]::new);
+                            int debitPartyNameLength = debitPartyName.length;
+                            if (debitPartyNameLength > 0) mpesaResponse.setPhoneNumber(debitPartyName[0]);
+                            if (debitPartyNameLength > 1) mpesaResponse.setFullNames(debitPartyName[1]);
+                        }
+                        if (resultParameter.getKey().equals("FinalisedTime")) {
+                            try {
+                                mpesaResponse.setTransactionDate(Helpers.formatDateTimeToInstant(resultParameter.getValue()));
+                            } catch (Exception e) {
+                            }
                         }
                     }
                 }
@@ -305,6 +350,7 @@ public class MpesaClient {
 
     /**
      * Disburse cash from business to customer
+     *
      * @return MpesaResponse Success{ internalStatus=true, responseCode, originatorConversationId, conversationId, responseDescription  } ||
      * MpesaResponse Failed{ internalStatus=false, errorCode, errorMessage, requestId }
      * @throws Exception
@@ -329,6 +375,7 @@ public class MpesaClient {
 
     /**
      * Remit tax to tax organization
+     *
      * @return MpesaResponse Success{ internalStatus=true, responseCode, originatorConversationId, conversationId, responseDescription  } ||
      * MpesaResponse Failed{ internalStatus=false, errorCode, errorMessage, requestId }
      * @throws Exception
@@ -357,6 +404,7 @@ public class MpesaClient {
 
     /**
      * Generate dynamic QR Code
+     *
      * @return MpesaResponse Success{ internalStatus=true, responseCode, requestID, responseDescription, qrCode  } ||
      * MpesaResponse Failed{ internalStatus=false, errorCode, errorMessage, requestId }
      * @throws Exception
