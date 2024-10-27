@@ -7,7 +7,7 @@ import lombok.Getter;
 @Getter
 public enum Environment {
     DEVELOPMENT("https://sandbox.safaricom.co.ke"),
-    PRODUCTION("https://safaricom.co.ke");
+    PRODUCTION("https://api.safaricom.co.ke");
 
     private final String value;
 
