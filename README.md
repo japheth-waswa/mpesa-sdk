@@ -29,7 +29,7 @@ Integrates with Mpesa daraja api
     <dependency>
         <groupId>io.github.japheth-waswa.mpesa</groupId>
         <artifactId>mpesa-sdk</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </dependency>
     ```
 

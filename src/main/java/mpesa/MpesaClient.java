@@ -62,11 +62,12 @@ public class MpesaClient {
     }
 
     private ApiClient<MpesaRequest, MpesaResponse> buildRequest(@NotNull ApiClient<MpesaRequest, MpesaResponse> apiClient, @NotNull MpesaRequest mpesaRequest, @NotNull MpesaURL mpesaURL) throws Exception {
+        String accessToken = generateAccessToken().getAccessToken();
         return apiClient.toBuilder()
                 .reqClass(mpesaRequest)
                 .responseClass(MpesaResponse.class)
                 .baseUri(Helpers.buildUrl(null, environment.getValue(), mpesaURL.getUrl()).toString())
-                .headers(Collections.singletonList(new Header("Authorization", Helpers.bindBearerToken(generateAccessToken().getAccessToken()))))
+                .headers(Collections.singletonList(new Header("Authorization", Helpers.bindBearerToken(accessToken))))
                 .build();
     }
 
@@ -103,7 +104,9 @@ public class MpesaClient {
                      .baseUri(Helpers.buildUrl(null, environment.getValue(), MpesaURL.AUTH.getUrl()).toString())
                      .headers(Collections.singletonList(new Header("Authorization", "Basic " + basicAuth)))
                      .build()) {
-            return apiClientBuild.get();
+            MpesaResponse mpesaResponse = apiClientBuild.get();
+            mpesaResponse.setInternalStatus(mpesaResponse.getAccessToken() != null);
+            return mpesaResponse;
         }
     }
 
